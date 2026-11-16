@@ -205,6 +205,7 @@ Open Xcode, edit `DEVELOPMENT_TEAM[config=Debug]` in `xcconfigs/Global.xcconfig`
 - @Vishram1123 for the initial shortcut implementation.
 - @hugeBlack for SwiftUI contribution
 - @Staubgeborener for automatic AltStore/SideStore source updater
+- 
 - @fkunn1326 for improved app hiding
 - @slds1 for dynamic color feature
 - @Vishram1123 for iOS 26+ JIT Script Support
