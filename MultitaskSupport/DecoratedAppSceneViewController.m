@@ -31,6 +31,13 @@ typedef NS_ENUM(NSInteger, OutTaskSnapPosition) {
 @property(nonatomic) bool isAppTerminationRequested;
 @property(nonatomic) BOOL isObservingSettings;
 @property(nonatomic) BOOL isActiveWindow;
+
+- (void)applyNoLagSettings;
+- (void)applyCustomWallpaperInHostView:(UIView *)hostView;
+- (void)applyMacOSWindowChrome;
+- (void)snapWindowToPosition:(OutTaskSnapPosition)position;
+- (void)applyVerticalConstraintsAnimated:(BOOL)animated;
+- (void)applyWindowedSceneSettings:(UIMutableApplicationSceneSettings *)settings;
 @end
 
 @implementation DecoratedAppSceneViewController
@@ -166,7 +173,6 @@ typedef NS_ENUM(NSInteger, OutTaskSnapPosition) {
         return [UIMenu menuWithTitle:header children:menuItems];
     }];
 
-    // Slim 24.0pt macOS/iPadOS traffic lights
     UIImageConfiguration *trafficConfig = [UIImageSymbolConfiguration configurationWithPointSize:10.5 weight:UIImageSymbolWeightSemibold];
 
     UIImage *closeImage = [[UIImage systemImageNamed:@"xmark.circle.fill"] imageWithConfiguration:trafficConfig];
@@ -209,8 +215,8 @@ typedef NS_ENUM(NSInteger, OutTaskSnapPosition) {
 
     CGFloat opacity = 1.0;
     id opacityObj = [defaults objectForKey:@"OutTaskWindowOpacity"];
-    if (opacityObj) {
-        opacity = MIN(1.0, MAX(0.45, [opacityObj doubleValue]));
+    if ([opacityObj respondsToSelector:@selector(doubleValue)]) {
+        opacity = MIN(1.0, MAX(0.45, (CGFloat)[opacityObj doubleValue]));
     }
     if (!self.view.hidden) {
         self.view.alpha = opacity;
@@ -258,8 +264,8 @@ typedef NS_ENUM(NSInteger, OutTaskSnapPosition) {
 
     CGFloat dimAlpha = 0.0;
     id dimObj = [defaults objectForKey:@"OutTaskWallpaperDimAlpha"];
-    if (dimObj) {
-        dimAlpha = MIN(0.85, MAX(0.0, [dimObj doubleValue]));
+    if ([dimObj respondsToSelector:@selector(doubleValue)]) {
+        dimAlpha = MIN(0.85, MAX(0.0, (CGFloat)[dimObj doubleValue]));
     }
     if (dimAlpha > 0.001) {
         CALayer *dimLayer = [CALayer layer];
@@ -278,7 +284,6 @@ typedef NS_ENUM(NSInteger, OutTaskSnapPosition) {
     stack.layer.borderWidth = _isMaximized ? 0.0 : (_isActiveWindow ? 1.0 : 0.6);
     stack.layer.borderColor = (_isActiveWindow ? [UIColor separatorColor] : [UIColor colorWithWhite:0.5 alpha:0.2]).CGColor;
 
-    // Keep shadow lightweight and skip extra shadow work during no-lag mode if desired
     if ([self isNoLagEnabled]) {
         stack.layer.shadowOpacity = 0.0;
         stack.layer.shadowRadius = 0.0;
@@ -716,7 +721,6 @@ typedef NS_ENUM(NSInteger, OutTaskSnapPosition) {
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if (context != kOutTaskKVOContext) {
-        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
         return;
     }
 
